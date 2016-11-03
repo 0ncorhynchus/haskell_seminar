@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+
+image="gibiansky/ihaskell"
+cidfile=.serve
+
+function usage_exit() {
+  echo "Usage: $0 [-p port] [up|down|help]" 1>&2
+  exit 1
+}
+
+function serve_up() {
+  port=$1
+  if [ -e "$cidfile" ]; then
+    echo "Already running" 1>&2
+    exit
+  else
+    docker run -d -v $(pwd):/notebooks -p $port:8888 $image > $cidfile &&
+    echo -e "Start up successfully in localhost:$port"
+  fi
+}
+
+function serve_down() {
+  if [ -r "$cidfile" ]; then
+    cid=$(head -n 1 $cidfile)
+    docker stop $cid > /dev/null && \
+    docker rm $cid > /dev/null && \
+    rm $cidfile && \
+    echo "Shut down successfully"
+  else
+    echo "Cannot read: $cidfile" 1>&2
+    exit 3
+  fi
+}
+
+port=80
+while getopts p: OPT
+do
+  case $OPT in
+    p)
+      port=$OPTARG
+      ;;
+    \?) usage_exit
+      ;;
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [ -z "$1" ]; then
+  usage_exit
+elif [ "$1" = up ]; then
+  serve_up $port
+elif [ "$1" = down ]; then
+  serve_down
+elif [ "$1" = help ]; then
+  usage_exit
+else
+  echo "Unknown command: $1" 1>&2
+  exit 2
+fi
