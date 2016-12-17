@@ -1,2 +1,4 @@
 .serve
 .ipynb_checkpoints
+*.hi
+*.o
